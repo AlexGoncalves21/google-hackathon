@@ -1,0 +1,8 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+uv.lock
+deployment_metadata.json
+app/app_utils/.requirements.txt
+.DS_Store
