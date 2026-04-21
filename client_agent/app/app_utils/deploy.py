@@ -6,6 +6,7 @@ import logging
 import os
 import warnings
 from typing import Any
+from urllib.parse import urlparse
 
 import click
 import google.auth
@@ -18,6 +19,20 @@ warnings.filterwarnings(
     "ignore", category=FutureWarning, module="google.cloud.aiplatform"
 )
 load_dotenv()
+
+_TRUE_VALUES = {"1", "true", "t", "yes", "y", "on"}
+_LOCAL_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0"}
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None or value == "":
+        return default
+    return value.strip().lower() in _TRUE_VALUES
+
+
+def _is_local_base_url(base_url: str) -> bool:
+    return (urlparse(base_url).hostname or "").lower() in _LOCAL_HOSTS
 
 
 def generate_class_methods_from_agent(agent_instance: Any) -> list[dict[str, Any]]:
@@ -97,6 +112,14 @@ def configure_runtime_env(location: str, project: str) -> dict[str, str]:
     normalized_base_url = main_agent_base_url.rstrip("/")
     model_name = os.getenv("MODEL_NAME", "gemini-2.5-pro")
     use_vertex_ai = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "True")
+    require_auth = _env_flag(
+        "MAIN_AGENT_REQUIRE_AUTH",
+        default=not _is_local_base_url(normalized_base_url),
+    )
+    main_agent_audience = os.getenv("MAIN_AGENT_AUDIENCE", "").strip()
+    if not main_agent_audience and require_auth:
+        main_agent_audience = normalized_base_url
+    datastore_path = os.getenv("DATASTORE_PATH", "").strip()
 
     # Keep the current process and the remote runtime aligned.
     os.environ["MAIN_AGENT_BASE_URL"] = normalized_base_url
@@ -105,12 +128,24 @@ def configure_runtime_env(location: str, project: str) -> dict[str, str]:
     os.environ["GOOGLE_CLOUD_PROJECT"] = project
     os.environ["GOOGLE_CLOUD_LOCATION"] = location
     os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = use_vertex_ai
+    os.environ["MAIN_AGENT_REQUIRE_AUTH"] = "True" if require_auth else "False"
+    if main_agent_audience:
+        os.environ["MAIN_AGENT_AUDIENCE"] = main_agent_audience
+    if datastore_path:
+        os.environ["DATASTORE_PATH"] = datastore_path
 
-    return {
+    env_vars = {
         "MODEL_NAME": model_name,
         "MAIN_AGENT_BASE_URL": normalized_base_url,
         "GITHUB_AGENT_URL": normalized_base_url,
+        "MAIN_AGENT_REQUIRE_AUTH": "True" if require_auth else "False",
     }
+    if main_agent_audience:
+        env_vars["MAIN_AGENT_AUDIENCE"] = main_agent_audience
+    if datastore_path:
+        env_vars["DATASTORE_PATH"] = datastore_path
+
+    return env_vars
 
 
 @click.command()

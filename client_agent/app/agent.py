@@ -12,14 +12,16 @@ from google.adk.agents.remote_a2a_agent import (
 )
 from google.adk.apps import App
 from google.adk.models import Gemini
-from google.genai import types
 from google.adk.tools import VertexAiSearchTool
+from google.genai import types
+
+from app.app_utils.authorized_a2a_client import build_main_agent_httpx_client
 
 load_dotenv()
 
 PROMPTS_PATH = Path(__file__).resolve().parent / "prompts" / "agent.yaml"
 
-DATASTORE_PATH = "DATASTORE_PATH_HERE"
+DATASTORE_PATH = os.getenv("DATASTORE_PATH", "").strip()
 
 def _load_agent_config() -> dict[str, Any]:
     with PROMPTS_PATH.open(encoding="utf-8") as file:
@@ -50,10 +52,22 @@ def _build_agent_card_url() -> str:
     return f"{base_url}/{card_path}"
 
 
+def _build_search_tools() -> list[Any]:
+    if not DATASTORE_PATH:
+        warnings.warn(
+            "DATASTORE_PATH is not set; Vertex AI Search grounding is disabled.",
+            stacklevel=2,
+        )
+        return []
+
+    return [VertexAiSearchTool(data_store_id=DATASTORE_PATH)]
+
+
 github_specialist = RemoteA2aAgent(
     name=AGENT_CONFIG["remote_agent"]["name"],
     description=AGENT_CONFIG["remote_agent"]["description"],
     agent_card=_build_agent_card_url(),
+    httpx_client=build_main_agent_httpx_client(_get_main_agent_base_url()),
 )
 
 root_agent = Agent(
@@ -64,9 +78,7 @@ root_agent = Agent(
     ),
     instruction=AGENT_CONFIG["root_agent"]["instruction"],
     sub_agents=[github_specialist],
-    tools=[
-         VertexAiSearchTool(data_store_id=DATASTORE_PATH),
-     ],
+    tools=_build_search_tools(),
 )
 
 app = App(root_agent=root_agent, name=AGENT_CONFIG["app"]["name"])

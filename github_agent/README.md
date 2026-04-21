@@ -24,7 +24,7 @@ github_agent/
 ## What This Agent Does
 
 - Connects to the GitHub MCP endpoint with a GitHub personal access token.
-- Exposes a public A2A agent card.
+- Exposes an A2A agent card from Cloud Run.
 - Handles GitHub retrieval tasks for the separate `client_agent`.
 
 ## Quick Start
@@ -68,11 +68,26 @@ make deploy
 `make deploy` stores the GitHub token in Secret Manager and mounts it into Cloud Run
 as a secret-backed environment variable.
 
+By default the service now deploys as a private Cloud Run service. To let the
+Gemini-facing `client_agent` call it, grant `roles/run.invoker` to the Agent
+Engine runtime service account:
+
+```bash
+make grant-client-invoker CLIENT_INVOKER_SERVICE_ACCOUNT=<agent-engine-service-account>
+```
+
+If you want to make the service public intentionally, you can still do:
+
+```bash
+make deploy SERVICE_VISIBILITY=public
+```
+
 ## End-To-End Setup
 
 This service is only one half of the hackathon architecture:
 
 1. Deploy `github_agent` to Cloud Run.
-2. Put the public service URL into `client_agent/.env`.
-3. Deploy `client_agent` to Agent Engine.
-4. Register `client_agent` in Gemini Enterprise.
+2. Grant `roles/run.invoker` on that Cloud Run service to the client runtime identity.
+3. Put the Cloud Run service URL into `client_agent/.env`.
+4. Deploy `client_agent` to Agent Engine.
+5. Register `client_agent` in Gemini Enterprise.

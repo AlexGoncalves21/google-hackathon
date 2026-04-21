@@ -7,6 +7,8 @@ PORT ?= 8001
 HOST ?= 0.0.0.0
 MODEL_NAME ?= gemini-2.5-pro
 GITHUB_TOKEN_SECRET_NAME ?= github-personal-access-token
+SERVICE_VISIBILITY ?= private
+CLIENT_INVOKER_SERVICE_ACCOUNT ?=
 
 run:
 	@echo "Starting application on http://localhost:$(PORT)..."
@@ -40,12 +42,16 @@ deploy:
 		--project "$(PROJECT_ID)" \
 		--member="serviceAccount:$$RUNTIME_SERVICE_ACCOUNT" \
 		--role="roles/secretmanager.secretAccessor" >/dev/null
-	@echo "Deploying $(SERVICE_NAME) to Cloud Run in $(REGION)..."
-	@gcloud run deploy "$(SERVICE_NAME)" \
+	@echo "Deploying $(SERVICE_NAME) to Cloud Run in $(REGION) with $(SERVICE_VISIBILITY) access..."
+	@AUTH_FLAG=""; \
+	if [ "$(SERVICE_VISIBILITY)" = "public" ]; then \
+		AUTH_FLAG="--allow-unauthenticated"; \
+	fi; \
+	gcloud run deploy "$(SERVICE_NAME)" \
 		--project "$(PROJECT_ID)" \
 		--region "$(REGION)" \
 		--source . \
-		--allow-unauthenticated \
+		$$AUTH_FLAG \
 		--set-env-vars "MODEL_NAME=$(MODEL_NAME),GOOGLE_CLOUD_PROJECT=$(PROJECT_ID),GOOGLE_CLOUD_LOCATION=$(REGION),GOOGLE_GENAI_USE_VERTEXAI=True" \
 		--set-secrets "GITHUB_PERSONAL_ACCESS_TOKEN=$(GITHUB_TOKEN_SECRET_NAME):latest"
 	@SERVICE_URL=$$(gcloud run services describe "$(SERVICE_NAME)" --project "$(PROJECT_ID)" --region "$(REGION)" --format='value(status.url)'); \
@@ -59,6 +65,28 @@ deploy:
 	echo "Service URL: $$SERVICE_URL" && \
 	echo "Agent Card: $$SERVICE_URL/.well-known/agent-card.json" && \
 	echo "GitHub token stored in Secret Manager secret: $(GITHUB_TOKEN_SECRET_NAME)"
+	@if [ "$(SERVICE_VISIBILITY)" != "public" ]; then \
+		if [ -n "$(CLIENT_INVOKER_SERVICE_ACCOUNT)" ]; then \
+			gcloud run services add-iam-policy-binding "$(SERVICE_NAME)" \
+				--project "$(PROJECT_ID)" \
+				--region "$(REGION)" \
+				--member="serviceAccount:$(CLIENT_INVOKER_SERVICE_ACCOUNT)" \
+				--role="roles/run.invoker" >/dev/null && \
+			echo "Granted roles/run.invoker to $(CLIENT_INVOKER_SERVICE_ACCOUNT)"; \
+		else \
+			echo "⚠️  Cloud Run is private. Grant roles/run.invoker to the client runtime service account before invoking this service."; \
+		fi; \
+	fi
+
+grant-client-invoker:
+	@test -n "$(PROJECT_ID)" || (echo "No GCP project configured. Run 'gcloud config set project <project-id>' first."; exit 1)
+	@test -n "$(CLIENT_INVOKER_SERVICE_ACCOUNT)" || (echo "Set CLIENT_INVOKER_SERVICE_ACCOUNT=<service-account-email>."; exit 1)
+	@gcloud run services add-iam-policy-binding "$(SERVICE_NAME)" \
+		--project "$(PROJECT_ID)" \
+		--region "$(REGION)" \
+		--member="serviceAccount:$(CLIENT_INVOKER_SERVICE_ACCOUNT)" \
+		--role="roles/run.invoker" >/dev/null
+	@echo "Granted roles/run.invoker to $(CLIENT_INVOKER_SERVICE_ACCOUNT)"
 
 eval:
 	@echo "==============================================================================="
@@ -90,7 +118,7 @@ inspector: setup-inspector-if-needed build-inspector-if-needed
 	@echo "|    Use the Agent Card URL from 'make deploy' output                        |"
 	@echo "|                                                                             |"
 	@echo "|    🔐 Auth: Expand 'Authentication & Headers', select 'Bearer Token',       |"
-	@echo "|       and paste output of: gcloud auth print-access-token                  |"
+	@echo "|       and paste a Cloud Run identity token for the deployed service URL    |"
 	@echo "|                                                                             |"
 	@echo "| ℹ️  Note: This service is deployed on Cloud Run, not Agent Engine.         |"
 	@echo "==============================================================================="
