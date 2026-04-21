@@ -34,3 +34,7 @@ github_agent = RemoteA2aAgent(
 root_agent = Agent(
     # TODO
 )
+
+from google.adk.apps import App
+
+app = App(root_agent=root_agent, name="agent08_github_a2a_agent_mcp_server")

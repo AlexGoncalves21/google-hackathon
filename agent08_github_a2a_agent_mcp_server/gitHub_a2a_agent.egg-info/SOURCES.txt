@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+gitHub_a2a_agent.egg-info/PKG-INFO
+gitHub_a2a_agent.egg-info/SOURCES.txt
+gitHub_a2a_agent.egg-info/dependency_links.txt
+gitHub_a2a_agent.egg-info/requires.txt
+gitHub_a2a_agent.egg-info/top_level.txt
+github_agent/__init__.py
+github_agent/agent.py
