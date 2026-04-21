@@ -6,6 +6,16 @@ install:
 	uv sync
 
 # ==============================================================================
+# Data Ingestion
+# ==============================================================================
+
+# Upload docs/knowledge_base/*.md to GCS so the Vertex AI Search Data Connector
+# can pick them up. Requires GCS_BUCKET_NAME and GOOGLE_CLOUD_PROJECT in .env
+sync-data:
+	@echo "Uploading knowledge base documents to GCS..."
+	uv run python -m data_ingestion.ingest
+
+# ==============================================================================
 # Playground
 # ==============================================================================
 
