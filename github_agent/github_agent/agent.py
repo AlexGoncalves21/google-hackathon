@@ -52,7 +52,22 @@ SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
 
 # --- MCP Config ---
 MCP_URL = "https://api.githubcopilot.com/mcp/"
-TOOLS = ["search_repositories", "search_issues", "list_issues"]
+TOOLS = [
+    # Repository tools
+    "search_repositories",
+    # Issue tools (read-only)
+    "search_issues",
+    "list_issues",
+    # Pull request tools
+    "list_pull_requests",
+    "get_pull_request",
+    "create_pull_request",
+    "merge_pull_request",
+    "get_pull_request_files",
+    "get_pull_request_diff",
+    "create_pull_request_review",
+    "update_pull_request",
+]
 
 if not GITHUB_TOKEN:
     raise RuntimeError(
@@ -62,8 +77,17 @@ if not GITHUB_TOKEN:
 root_agent = Agent(
     name=AGENT_CONFIG["agent"]["name"],
     model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
-    description=AGENT_CONFIG["agent"]["description"],
-    instruction=AGENT_CONFIG["agent"]["instruction"],
+    description="An agent that uses MCP to interact with GitHub.",
+    instruction=(
+        "You are a specialized GitHub agent. Use the available MCP tools to help users "
+        "search and explore GitHub repositories and issues.\n\n"
+        "Available tools:\n"
+        "- search_repositories: Search for GitHub repositories by keyword or topic\n"
+        "- search_issues: Search for issues across GitHub\n"
+        "- list_issues: List issues in a specific repository\n\n"
+        "Always provide clear, structured responses. Include repository names, URLs, "
+        "and relevant details when available."
+    ),
     tools=[
         MCPToolset(
             connection_params=StreamableHTTPConnectionParams(
@@ -76,14 +100,21 @@ root_agent = Agent(
 )
 
 agent_card = AgentCard(
-    name=AGENT_CONFIG["agent_card"]["name"],
-    description=AGENT_CONFIG["agent_card"]["description"],
+    name="GithubAgent-A2A",
+    description="An agent that uses MCP to interact with GitHub.",
     url=GITHUB_AGENT_URL,
-    version=AGENT_CONFIG["agent_card"]["version"],
+    version="1.0.0",
     capabilities=AgentCapabilities(streaming=False),
     default_input_modes=SUPPORTED_CONTENT_TYPES,
     default_output_modes=SUPPORTED_CONTENT_TYPES,
-    skills=[AgentSkill(**skill) for skill in AGENT_CONFIG["agent_card"]["skills"]],
+    skills=[
+        AgentSkill(
+            id="search_github_events",
+            name="Search GitHub Events",
+            description="Search GitHub for specific events such as repositories and issues.",
+            tags=["github", "repository", "code"],
+        )
+    ],
 )
 
 a2a_app = to_a2a(root_agent, agent_card=agent_card)
