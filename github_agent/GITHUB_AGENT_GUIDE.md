@@ -15,13 +15,15 @@ client_agent
   -> GitHub
 ```
 
-Inside this directory, the important runtime file is:
+Inside this directory, the important runtime files are:
 
 1. **github_agent/github_agent/agent.py (The Service):**
    - Defines the specialized GitHub agent.
    - Connects to `https://api.githubcopilot.com/mcp/` with a GitHub token.
    - Loads selected GitHub tools such as `search_repositories`, `search_issues`, and `list_issues`.
    - Exposes the agent as an A2A web service.
+2. **github_agent/github_agent/prompts/agent.yaml (The Prompt Config):**
+   - Stores the GitHub specialist instruction and agent-card metadata in YAML.
 
 ## Setup and Configuration
 

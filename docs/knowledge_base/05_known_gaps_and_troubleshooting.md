@@ -21,7 +21,7 @@ For live behavior, the system needs both:
 - `client_agent/` deployed to Agent Engine
 
 If either deployment URL is wrong or stale, the user-facing agent can fall back
-to generic or stubbed responses.
+to generic responses or fail to reach the specialist.
 
 ## What Is Most Complete Right Now
 
@@ -30,21 +30,16 @@ Both top-level apps are independently runnable:
 - `client_agent/` is the Gemini Enterprise-facing delegator.
 - `github_agent/` is the GitHub MCP-backed specialist.
 
-The client still has the gentler fallback behavior, while the GitHub service is
-the component that actually talks to GitHub through MCP.
+The GitHub service is the component that actually talks to GitHub through MCP,
+while the client is a thin Gemini-facing delegator.
 
 ## Common Questions and Answers
 
-### Why does the client answer with a stub instead of calling GitHub?
+### Why does the client fail before answering GitHub questions?
 
-The client uses a local stub when:
-
-- `USE_LOCAL_GITHUB_STUB=true`
-- the base URL points to localhost
-- the base URL points to `127.0.0.1`
-
-In that case the client intentionally avoids claiming that it has queried live
-GitHub data.
+The most common cause is that `MAIN_AGENT_BASE_URL` or `GITHUB_AGENT_URL` is
+missing. The client now requires a real remote GitHub specialist and no longer
+creates a local mock specialist automatically.
 
 ### Why does the GitHub specialist fail on startup?
 
@@ -68,7 +63,6 @@ Suggested order:
 
 Possible causes:
 
-- The client is in local stub mode.
 - The specialist service is not deployed or not running.
 - The A2A agent card URL is wrong.
 - The GitHub toolset does not yet cover the question being asked.
@@ -86,7 +80,6 @@ Possible causes:
 
 Possible causes:
 
-- The client deployed successfully, but it is still using the stub.
 - The remote specialist URL still points to localhost.
 - The question requires tools that the current GitHub specialist does not yet expose.
 

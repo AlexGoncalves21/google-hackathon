@@ -10,12 +10,14 @@ from typing import Any
 import click
 import google.auth
 import vertexai
+from dotenv import load_dotenv
 from vertexai._genai import _agent_engines_utils
 from vertexai._genai.types import AgentEngine, AgentEngineConfig
 
 warnings.filterwarnings(
     "ignore", category=FutureWarning, module="google.cloud.aiplatform"
 )
+load_dotenv()
 
 
 def generate_class_methods_from_agent(agent_instance: Any) -> list[dict[str, Any]]:
@@ -82,6 +84,35 @@ def print_deployment_success(remote_agent: Any, location: str, project: str) -> 
     print(f"\n📊 Open Console Playground: {playground_url}\n")
 
 
+def configure_runtime_env(location: str, project: str) -> dict[str, str]:
+    """Prepare the local and remote env vars required by the deployed agent."""
+    main_agent_base_url = (
+        os.getenv("MAIN_AGENT_BASE_URL") or os.getenv("GITHUB_AGENT_URL")
+    )
+    if not main_agent_base_url:
+        raise click.ClickException(
+            "Set MAIN_AGENT_BASE_URL or GITHUB_AGENT_URL before deploying the client agent."
+        )
+
+    normalized_base_url = main_agent_base_url.rstrip("/")
+    model_name = os.getenv("MODEL_NAME", "gemini-2.5-pro")
+    use_vertex_ai = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "True")
+
+    # Keep the current process and the remote runtime aligned.
+    os.environ["MAIN_AGENT_BASE_URL"] = normalized_base_url
+    os.environ["GITHUB_AGENT_URL"] = normalized_base_url
+    os.environ["MODEL_NAME"] = model_name
+    os.environ["GOOGLE_CLOUD_PROJECT"] = project
+    os.environ["GOOGLE_CLOUD_LOCATION"] = location
+    os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = use_vertex_ai
+
+    return {
+        "MODEL_NAME": model_name,
+        "MAIN_AGENT_BASE_URL": normalized_base_url,
+        "GITHUB_AGENT_URL": normalized_base_url,
+    }
+
+
 @click.command()
 @click.option("--project", default=None, help="GCP project ID.")
 @click.option("--location", default="us-central1", help="GCP region.")
@@ -133,14 +164,10 @@ def deploy_agent_engine_app(
     logging.basicConfig(level=logging.INFO)
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
-    env_vars = {
-        "GOOGLE_CLOUD_REGION": location,
-        "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY": "true",
-        "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true",
-    }
-
     if not project:
         _, project = google.auth.default()
+
+    env_vars = configure_runtime_env(location=location, project=project)
 
     click.echo("\n🚀 Deploying Client Agent to Vertex AI Agent Engine...")
 

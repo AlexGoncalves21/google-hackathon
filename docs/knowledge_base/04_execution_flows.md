@@ -25,54 +25,25 @@ The conceptual delegation flow in this repository is:
 
 ## Current Practical Flow
 
-There are two practical client paths in the repository:
-
-### Path A: Root-Level Delegating Client
-
-- file: `agent.py`
-- state: incomplete
-
-This file is the simplest planned delegator, but it still has TODO markers and
-is not the best reference for an end-to-end runnable flow.
-
-### Path B: Nested Gemini Enterprise Client
+The practical client path in the repository is:
 
 - file: `client_agent/app/agent.py`
-- state: more complete
+- state: deployment-ready
 
-This path supports two modes:
-
-- Stub mode for local development when the real specialist is unavailable.
-- Remote A2A mode when a real specialist agent card URL exists.
-
-This makes `client_agent/` the most useful reference for a runnable client.
-
-## Stub Mode Flow
-
-When stub mode is active, `client_agent/app/agent.py` creates a local ADK agent
-named `github_specialist_stub`.
-
-The stub does not claim to fetch live GitHub data. Instead it:
-
-- helps structure GitHub tasks
-- drafts issue and PR review plans
-- explains what repository context is needed
-- describes what the real specialist will do once connected
-
-This is useful for UI, prompt, and deployment testing before the MCP backend is
-fully working.
+The client expects a real A2A specialist URL. For local development, that
+usually means running `github_agent` locally on port `8001`.
 
 ## Remote Specialist Flow
 
-When stub mode is off, the client uses `RemoteA2aAgent` and points it at the
-specialist card URL derived from `MAIN_AGENT_BASE_URL`.
+The client uses `RemoteA2aAgent` and points it at the specialist card URL
+derived from `MAIN_AGENT_BASE_URL`.
 
 That means the expected remote sequence is:
 
 1. Start or deploy the specialist service.
 2. Expose the A2A card URL.
 3. Configure `MAIN_AGENT_BASE_URL`.
-4. Start or deploy the nested client agent.
+4. Start or deploy the client agent.
 5. Let the client delegate GitHub questions to the specialist.
 
 ## Agent Engine Flow
@@ -86,8 +57,8 @@ ADK app in `AgentEngineApp`, which:
 - configures artifact storage
 - exposes a `register_feedback` operation
 
-This file represents the Agent Engine deployment entry point for the nested
-client agent.
+This file represents the Agent Engine deployment entry point for the
+Gemini-facing client agent.
 
 ## Gemini Enterprise Flow
 

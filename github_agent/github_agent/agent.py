@@ -16,16 +16,55 @@
 
 import logging
 import os
+import pathlib
 from pathlib import Path
+from typing import Any
 
+import yaml
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from dotenv import load_dotenv
 from google.adk import Agent
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
+from google.adk.skills import load_skill_from_dir
+from google.adk.tools import skill_toolset
 from google.adk.tools.mcp_tool import MCPToolset, StreamableHTTPConnectionParams
+
+SKILLS_DIR = pathlib.Path(__file__).resolve().parent.parent / "skills"
+
+adk_agent_conventions = load_skill_from_dir(SKILLS_DIR / "adk-agent-conventions")
+
+commit_impact_analysis = load_skill_from_dir(SKILLS_DIR / "commit-impact-analysis")
+
+conventional_commits = load_skill_from_dir(SKILLS_DIR / "conventional-commits")
+
+github_issue_triage = load_skill_from_dir(SKILLS_DIR / "github-issue-triage")
+
+review_pr_changes = load_skill_from_dir(SKILLS_DIR / "review-pr-changes")
+
+security_change_review = load_skill_from_dir(SKILLS_DIR / "security-change-review")
+
+my_skill_toolset = skill_toolset.SkillToolset(
+    skills=[
+        adk_agent_conventions,
+        commit_impact_analysis,
+        conventional_commits,
+        github_issue_triage,
+        review_pr_changes,
+        security_change_review,
+    ]
+)
 
 dotenv_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=dotenv_path)
+PROMPTS_PATH = Path(__file__).resolve().parent / "prompts" / "agent.yaml"
+
+
+def _load_agent_config() -> dict[str, Any]:
+    with PROMPTS_PATH.open(encoding="utf-8") as file:
+        return yaml.safe_load(file)
+
+
+AGENT_CONFIG = _load_agent_config()
 
 # --- Logging ---
 logging.basicConfig(
@@ -64,11 +103,15 @@ if not GITHUB_TOKEN:
     )
 
 root_agent = Agent(
-    name="github_agent",
+    name=AGENT_CONFIG["agent"]["name"],
     model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
-    description="An agent that uses MCP to interact with GitHub repositories, issues, and pull requests.",
+    description="An agent that uses MCP to interact with GitHub.",
     instruction=(
         "You are a specialized GitHub agent. Use the available MCP tools to help users "
+        "search and explore GitHub repositories and issues.\n\n"
+        "Always provide clear, structured responses. Include repository names, URLs, "
+        "and relevant details when available."
+        "For the procedures use your skills to analyze commit impacts, triage issues, review PR changes, and ensure security best practices."
         "search, explore, and manage GitHub repositories, issues, and pull requests.\n\n"
         "## Repository Tools\n"
         "- search_repositories: Search for GitHub repositories by keyword, topic, or other criteria.\n\n"
@@ -104,15 +147,16 @@ root_agent = Agent(
                 headers={"Authorization": f"Bearer {GITHUB_TOKEN}"},
             ),
             tool_filter=TOOLS,
-        )
+        ),
+        my_skill_toolset,
     ],
 )
 
 agent_card = AgentCard(
     name="GithubAgent-A2A",
-    description="An agent that uses MCP to interact with GitHub repositories, issues, and pull requests.",
+    description="An agent that uses MCP to interact with GitHub.",
     url=GITHUB_AGENT_URL,
-    version="1.1.0",
+    version="1.0.0",
     capabilities=AgentCapabilities(streaming=False),
     default_input_modes=SUPPORTED_CONTENT_TYPES,
     default_output_modes=SUPPORTED_CONTENT_TYPES,
@@ -120,17 +164,9 @@ agent_card = AgentCard(
         AgentSkill(
             id="search_github_events",
             name="Search GitHub Events",
-            description="Search GitHub for repositories and issues.",
-            tags=["github", "repository", "issues"],
-        ),
-        AgentSkill(
-            id="manage_pull_requests",
-            name="Manage Pull Requests",
-            description=(
-                "List, create, update, review, and merge pull requests in a GitHub repository."
-            ),
-            tags=["github", "pull-request", "code-review", "merge"],
-        ),
+            description="Epertise in Github event search and analysis, providing insights into repository activities, issue trends, and pull request dynamics.",
+            tags=["github", "repository", "code"],
+        )
     ],
 )
 

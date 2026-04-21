@@ -7,6 +7,7 @@ be able to answer from the mock corpus.
 
 - What is the difference between `client_agent/` and `github_agent/`?
 - Which file is the GitHub specialist service?
+- Which YAML file stores the client agent prompt?
 - Which file wraps the client agent for Agent Engine deployment?
 - Does this project use MCP, A2A, or both?
 - What is the role of `github_agent/github_agent/agent.py`?
@@ -14,7 +15,6 @@ be able to answer from the mock corpus.
 ## Configuration Questions
 
 - Which environment variables are required at the project root?
-- What does `USE_LOCAL_GITHUB_STUB` do?
 - What is `MAIN_AGENT_BASE_URL` used for?
 - Which port is used by the local GitHub specialist?
 - Where is the GitHub personal access token expected?
@@ -31,7 +31,7 @@ be able to answer from the mock corpus.
 
 - Which parts of the GitHub specialist are still not implemented?
 - Does the current GitHub specialist support PR review yet?
-- Why might the system return a stubbed answer instead of live GitHub data?
+- Why might the system fail to reach live GitHub data?
 - Which part of the repository is the most complete implementation?
 
 ## File Discovery Questions
