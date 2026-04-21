@@ -13,11 +13,13 @@ from google.adk.agents.remote_a2a_agent import (
 from google.adk.apps import App
 from google.adk.models import Gemini
 from google.genai import types
+from google.adk.tools import VertexAiSearchTool
 
 load_dotenv()
 
 PROMPTS_PATH = Path(__file__).resolve().parent / "prompts" / "agent.yaml"
 
+DATASTORE_PATH = "DATASTORE_PATH_HERE"
 
 def _load_agent_config() -> dict[str, Any]:
     with PROMPTS_PATH.open(encoding="utf-8") as file:
@@ -62,6 +64,9 @@ root_agent = Agent(
     ),
     instruction=AGENT_CONFIG["root_agent"]["instruction"],
     sub_agents=[main_agent],
+    tools=[
+         VertexAiSearchTool(data_store_id=DATASTORE_PATH),
+     ],
 )
 
 app = App(root_agent=root_agent, name=AGENT_CONFIG["app"]["name"])
