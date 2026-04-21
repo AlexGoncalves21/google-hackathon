@@ -46,6 +46,8 @@ deploy:
 	@AUTH_FLAG=""; \
 	if [ "$(SERVICE_VISIBILITY)" = "public" ]; then \
 		AUTH_FLAG="--allow-unauthenticated"; \
+	else \
+		AUTH_FLAG="--no-allow-unauthenticated"; \
 	fi; \
 	gcloud run deploy "$(SERVICE_NAME)" \
 		--project "$(PROJECT_ID)" \

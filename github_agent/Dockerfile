@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir uv==0.8.13
 
 COPY pyproject.toml uv.lock README.md ./
 COPY github_agent ./github_agent
+COPY skills ./skills
 
 RUN uv sync --frozen --no-dev
 
