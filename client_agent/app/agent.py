@@ -50,7 +50,7 @@ def _build_agent_card_url() -> str:
     return f"{base_url}/{card_path}"
 
 
-main_agent = RemoteA2aAgent(
+github_specialist = RemoteA2aAgent(
     name=AGENT_CONFIG["remote_agent"]["name"],
     description=AGENT_CONFIG["remote_agent"]["description"],
     agent_card=_build_agent_card_url(),
@@ -63,7 +63,7 @@ root_agent = Agent(
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
     instruction=AGENT_CONFIG["root_agent"]["instruction"],
-    sub_agents=[main_agent],
+    sub_agents=[github_specialist],
     tools=[
          VertexAiSearchTool(data_store_id=DATASTORE_PATH),
      ],
