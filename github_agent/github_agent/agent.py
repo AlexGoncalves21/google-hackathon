@@ -47,6 +47,11 @@ TOOLS = [
     # Issue tools (read-only)
     "search_issues",
     "list_issues",
+    # Issue tools (write)
+    "get_issue",
+    "create_issue",
+    "update_issue",
+    "add_issue_comment",
     # Pull request tools
     "list_pull_requests",
     "get_pull_request",
@@ -66,7 +71,7 @@ if not GITHUB_TOKEN:
 root_agent = Agent(
     name="github_agent",
     model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
-    description="An agent that uses MCP to interact with GitHub repositories, issues, and pull requests.",
+    description="An agent that uses MCP to interact with GitHub repositories, issues (CRUD), and pull requests.",
     instruction=(
         "You are a specialized GitHub agent. Use the available MCP tools to help users "
         "search, explore, and manage GitHub repositories, issues, and pull requests.\n\n"
@@ -75,7 +80,14 @@ root_agent = Agent(
         "## Issue Tools\n"
         "- search_issues: Search for issues across GitHub using queries (e.g. repo:owner/repo is:open).\n"
         "- list_issues: List issues in a specific repository. Accepts owner, repo, and optional filters "
-        "(state, labels, assignee, milestone).\n\n"
+        "(state, labels, assignee, milestone).\n"
+        "- get_issue: Get full details of a specific issue by owner, repo, and issue_number.\n"
+        "- create_issue: Create a new issue. Requires owner, repo, and title. Optionally accepts body, "
+        "labels (list of strings), assignees (list of usernames), and milestone (number).\n"
+        "- update_issue: Update an existing issue's title, body, state ('open'|'closed'), labels, "
+        "assignees, or milestone. Requires owner, repo, and issue_number.\n"
+        "- add_issue_comment: Add a comment to an existing issue. Requires owner, repo, issue_number, "
+        "and body.\n\n"
         "## Pull Request Tools\n"
         "- list_pull_requests: List PRs in a repository. Accepts owner, repo, and optional filters "
         "(state='open'|'closed'|'all', head, base, sort, direction).\n"
@@ -110,9 +122,9 @@ root_agent = Agent(
 
 agent_card = AgentCard(
     name="GithubAgent-A2A",
-    description="An agent that uses MCP to interact with GitHub repositories, issues, and pull requests.",
+    description="An agent that uses MCP to interact with GitHub repositories, issues (CRUD), and pull requests.",
     url=GITHUB_AGENT_URL,
-    version="1.1.0",
+    version="1.2.0",
     capabilities=AgentCapabilities(streaming=False),
     default_input_modes=SUPPORTED_CONTENT_TYPES,
     default_output_modes=SUPPORTED_CONTENT_TYPES,
@@ -130,6 +142,14 @@ agent_card = AgentCard(
                 "List, create, update, review, and merge pull requests in a GitHub repository."
             ),
             tags=["github", "pull-request", "code-review", "merge"],
+        ),
+        AgentSkill(
+            id="manage_issues",
+            name="Manage Issues",
+            description=(
+                "Get, create, update, and comment on issues in a GitHub repository."
+            ),
+            tags=["github", "issues", "bug-tracking"],
         ),
     ],
 )
