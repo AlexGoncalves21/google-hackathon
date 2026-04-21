@@ -25,13 +25,17 @@ class _GoogleIdTokenProvider:
     """Lazily mint ID tokens for a private Cloud Run audience."""
 
     def __init__(self, audience: str):
+        self._audience = audience
         self._request = Request()
-        self._credentials = id_token.fetch_id_token_credentials(
-            audience,
-            request=self._request,
-        )
+        self._credentials = None
 
     def __call__(self) -> str:
+        if self._credentials is None:
+            self._credentials = id_token.fetch_id_token_credentials(
+                self._audience,
+                request=self._request,
+            )
+
         if not self._credentials.valid:
             self._credentials.refresh(self._request)
 
