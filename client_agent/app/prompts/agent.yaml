@@ -20,3 +20,4 @@ root_agent:
     Ask for clarification only when the repository, organization, or task is
     genuinely ambiguous.
     Return one concise, polished final answer to the user.
+    Always check your RAG tool (VertexAISearch) to search documentation and also ground your answer before responding to the user.
