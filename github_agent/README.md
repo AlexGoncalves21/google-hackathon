@@ -11,6 +11,7 @@ The Gemini-facing client lives separately in `../client_agent`.
 ```text
 github_agent/
 ├── github_agent/            # A2A service package and MCP-backed agent logic
+│   └── prompts/agent.yaml   # Prompt and agent-card config
 ├── deployment/              # Optional Terraform and infra helpers
 ├── notebooks/               # Prototyping and evaluation notebooks
 ├── tests/                   # Unit, integration, and load tests

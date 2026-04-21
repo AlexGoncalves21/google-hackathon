@@ -17,7 +17,9 @@
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
+import yaml
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from dotenv import load_dotenv
 from google.adk import Agent
@@ -26,6 +28,15 @@ from google.adk.tools.mcp_tool import MCPToolset, StreamableHTTPConnectionParams
 
 dotenv_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=dotenv_path)
+PROMPTS_PATH = Path(__file__).resolve().parent / "prompts" / "agent.yaml"
+
+
+def _load_agent_config() -> dict[str, Any]:
+    with PROMPTS_PATH.open(encoding="utf-8") as file:
+        return yaml.safe_load(file)
+
+
+AGENT_CONFIG = _load_agent_config()
 
 # --- Logging ---
 logging.basicConfig(
@@ -49,19 +60,10 @@ if not GITHUB_TOKEN:
     )
 
 root_agent = Agent(
-    name="github_agent",
+    name=AGENT_CONFIG["agent"]["name"],
     model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
-    description="An agent that uses MCP to interact with GitHub.",
-    instruction=(
-        "You are a specialized GitHub agent. Use the available MCP tools to help users "
-        "search and explore GitHub repositories and issues.\n\n"
-        "Available tools:\n"
-        "- search_repositories: Search for GitHub repositories by keyword or topic\n"
-        "- search_issues: Search for issues across GitHub\n"
-        "- list_issues: List issues in a specific repository\n\n"
-        "Always provide clear, structured responses. Include repository names, URLs, "
-        "and relevant details when available."
-    ),
+    description=AGENT_CONFIG["agent"]["description"],
+    instruction=AGENT_CONFIG["agent"]["instruction"],
     tools=[
         MCPToolset(
             connection_params=StreamableHTTPConnectionParams(
@@ -74,21 +76,14 @@ root_agent = Agent(
 )
 
 agent_card = AgentCard(
-    name="GithubAgent-A2A",
-    description="An agent that uses MCP to interact with GitHub.",
+    name=AGENT_CONFIG["agent_card"]["name"],
+    description=AGENT_CONFIG["agent_card"]["description"],
     url=GITHUB_AGENT_URL,
-    version="1.0.0",
+    version=AGENT_CONFIG["agent_card"]["version"],
     capabilities=AgentCapabilities(streaming=False),
     default_input_modes=SUPPORTED_CONTENT_TYPES,
     default_output_modes=SUPPORTED_CONTENT_TYPES,
-    skills=[
-        AgentSkill(
-            id="search_github_events",
-            name="Search GitHub Events",
-            description="Search GitHub for specific events such as repositories and issues.",
-            tags=["github", "repository", "code"],
-        )
-    ],
+    skills=[AgentSkill(**skill) for skill in AGENT_CONFIG["agent_card"]["skills"]],
 )
 
 a2a_app = to_a2a(root_agent, agent_card=agent_card)

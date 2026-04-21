@@ -39,5 +39,5 @@ This corpus is designed to help a retrieval system answer questions such as:
 - What does `github_agent/github_agent/agent.py` do?
 - Which file is the Gemini Enterprise-facing client?
 - Which environment variables are required for local execution?
-- Why does the client sometimes use a local stub instead of a remote A2A agent?
+- Which YAML files store the agent instructions?
 - What parts of the main GitHub MCP service are still incomplete?

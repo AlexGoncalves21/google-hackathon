@@ -42,7 +42,6 @@ The GitHub specialist currently raises an error if
 
 - `MODEL_NAME`
 - `MAIN_AGENT_BASE_URL`
-- `USE_LOCAL_GITHUB_STUB`
 - `GOOGLE_CLOUD_PROJECT`
 - `GOOGLE_CLOUD_LOCATION`
 - `GOOGLE_GENAI_USE_VERTEXAI`
@@ -51,20 +50,21 @@ The GitHub specialist currently raises an error if
 
 - `MAIN_AGENT_BASE_URL`: Preferred base URL of the main GitHub specialist.
 - `GITHUB_AGENT_URL`: Legacy fallback env var still supported by the client.
-- `USE_LOCAL_GITHUB_STUB`: Forces stub mode when `true`.
 - `GOOGLE_CLOUD_PROJECT`: Project for the client agent deployment.
 - `GOOGLE_CLOUD_LOCATION`: Region for the client agent and Agent Engine.
 
-## How the Client Chooses Stub vs Remote
+## How the Client Finds the Remote Specialist
 
-`client_agent/app/agent.py` uses a local stub if any of these are true:
+`client_agent/app/agent.py` requires a real specialist URL through:
 
-- `USE_LOCAL_GITHUB_STUB` is set to `1`, `true`, or `yes`
-- `MAIN_AGENT_BASE_URL` points to `localhost`
-- `MAIN_AGENT_BASE_URL` points to `127.0.0.1`
+- `MAIN_AGENT_BASE_URL`
+- or the legacy fallback `GITHUB_AGENT_URL`
 
-If stub mode is not active, the client constructs a remote agent card URL from
-the base URL plus the ADK A2A well-known card path.
+It constructs the remote agent card URL from that base URL plus the ADK A2A
+well-known card path.
+
+If no remote base URL is configured, the client raises an error instead of
+falling back to a local mock specialist.
 
 ## Ports and URLs
 
@@ -76,6 +76,13 @@ Important local URLs include:
 - Main specialist base URL: `http://localhost:8001`
 - Agent card URL:
   `http://localhost:8001/.well-known/agent-card.json`
+
+## Prompt Configuration
+
+The user-facing instructions are stored in YAML:
+
+- `client_agent/app/prompts/agent.yaml`
+- `github_agent/github_agent/prompts/agent.yaml`
 
 ## Python and Dependency Expectations
 
@@ -95,6 +102,7 @@ The `client_agent/pyproject.toml` currently specifies:
 - package name: `github-client-agent`
 - Python requirement: `>=3.10,<3.14`
 - ADK dependency range: `google-adk[a2a]>=1.18.0,<2.0.0`
+- `PyYAML` for prompt loading
 - Agent Engine dependency:
   `google-cloud-aiplatform[evaluation,agent-engines]>=1.130.0`
 - logging, telemetry, and dotenv support

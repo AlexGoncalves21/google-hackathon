@@ -28,6 +28,8 @@ client_agent/
 ├── app/
 │   ├── agent.py
 │   ├── agent_engine_app.py
+│   ├── prompts/
+│   │   └── agent.yaml
 │   └── app_utils/
 │       ├── deploy.py
 │       ├── telemetry.py
@@ -45,10 +47,11 @@ Important values:
 
 - `MAIN_AGENT_BASE_URL`: Base URL of the deployed main A2A agent.
 - `GITHUB_AGENT_URL`: Legacy alias also supported by the client code.
-- `USE_LOCAL_GITHUB_STUB`: When `true`, the client uses a local stand-in specialist
-  instead of calling the real remote GitHub agent.
 - `GOOGLE_CLOUD_PROJECT`: Project for the client agent deployment.
 - `GOOGLE_CLOUD_LOCATION`: Region for Agent Engine deployment.
+
+The client no longer contains a local mock GitHub agent. For local development,
+point `MAIN_AGENT_BASE_URL` at a real local or deployed `github_agent` service.
 
 ## Local Workflow
 

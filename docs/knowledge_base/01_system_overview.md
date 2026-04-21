@@ -31,6 +31,9 @@ This file hosts the specialized GitHub service. It is designed to:
 - Wrap those tools in an ADK agent.
 - Publish the agent over A2A with an agent card.
 
+Its instruction and A2A card metadata live in
+`github_agent/github_agent/prompts/agent.yaml`.
+
 ### Gemini Enterprise-Facing Client Agent
 
 - `client_agent/app/agent.py`
@@ -41,10 +44,12 @@ This is the more complete client path in the project.
 `client_agent/app/agent.py` defines:
 
 - A helper to resolve the main specialist base URL.
-- A local stub mode for development when the remote specialist is not ready.
-- A `RemoteA2aAgent` path for the real remote specialist.
+- A `RemoteA2aAgent` path for the remote specialist.
 - A `root_agent` that delegates GitHub tasks to the specialist.
 - An ADK `App`.
+
+The user-facing instruction for this agent lives in
+`client_agent/app/prompts/agent.yaml`.
 
 `client_agent/app/agent_engine_app.py` wraps that ADK app in an Agent Engine
 application with telemetry, logging, artifact storage, and feedback hooks.
