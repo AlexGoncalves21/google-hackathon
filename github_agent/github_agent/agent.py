@@ -44,23 +44,22 @@ MCP_URL = "https://api.githubcopilot.com/mcp/"
 TOOLS = [
     # Repository tools
     "search_repositories",
-    # Issue tools (read-only)
+    # Issue tools (read)
     "search_issues",
     "list_issues",
+    "issue_read",
     # Issue tools (write)
-    "get_issue",
-    "create_issue",
-    "update_issue",
+    "issue_write",
     "add_issue_comment",
     # Pull request tools
     "list_pull_requests",
-    "get_pull_request",
+    "search_pull_requests",
+    "pull_request_read",
     "create_pull_request",
     "merge_pull_request",
-    "get_pull_request_files",
-    "get_pull_request_diff",
-    "create_pull_request_review",
     "update_pull_request",
+    "pull_request_review_write",
+    "add_reply_to_pull_request_comment",
 ]
 
 if not GITHUB_TOKEN:
@@ -81,33 +80,32 @@ root_agent = Agent(
         "- search_issues: Search for issues across GitHub using queries (e.g. repo:owner/repo is:open).\n"
         "- list_issues: List issues in a specific repository. Accepts owner, repo, and optional filters "
         "(state, labels, assignee, milestone).\n"
-        "- get_issue: Get full details of a specific issue by owner, repo, and issue_number.\n"
-        "- create_issue: Create a new issue. Requires owner, repo, and title. Optionally accepts body, "
-        "labels (list of strings), assignees (list of usernames), and milestone (number).\n"
-        "- update_issue: Update an existing issue's title, body, state ('open'|'closed'), labels, "
-        "assignees, or milestone. Requires owner, repo, and issue_number.\n"
-        "- add_issue_comment: Add a comment to an existing issue. Requires owner, repo, issue_number, "
+        "- issue_read: Get full details of a specific issue by owner, repo, and issueNumber.\n"
+        "- issue_write: Create or update an issue. To create: provide owner, repo, title, and optionally "
+        "body, labels, and assignees. To update: also provide issueNumber and the fields to change "
+        "(title, body, state 'open'|'closed', labels, assignees).\n"
+        "- add_issue_comment: Add a comment to an existing issue. Requires owner, repo, issueNumber, "
         "and body.\n\n"
         "## Pull Request Tools\n"
         "- list_pull_requests: List PRs in a repository. Accepts owner, repo, and optional filters "
         "(state='open'|'closed'|'all', head, base, sort, direction).\n"
-        "- get_pull_request: Get full details of a specific PR by owner, repo, and pull_number. "
-        "Returns title, body, state, author, reviewers, labels, and merge status.\n"
+        "- search_pull_requests: Search PRs across GitHub using queries (e.g. repo:owner/repo is:open).\n"
+        "- pull_request_read: Get full details of a specific PR by owner, repo, and pullNumber. "
+        "Returns title, body, state, author, reviewers, labels, changed files, and diff.\n"
         "- create_pull_request: Create a new PR. Requires owner, repo, title, head (source branch), "
         "base (target branch), and body. Optionally set draft=True or maintainer_can_modify.\n"
         "- update_pull_request: Update an existing PR's title, body, state, or base branch.\n"
-        "- merge_pull_request: Merge a PR by owner, repo, and pull_number. Optionally specify "
+        "- merge_pull_request: Merge a PR by owner, repo, and pullNumber. Optionally specify "
         "merge_method ('merge'|'squash'|'rebase') and a commit message.\n"
-        "- get_pull_request_files: List files changed in a PR with their patch diffs and status.\n"
-        "- get_pull_request_diff: Get the full unified diff of a PR.\n"
-        "- create_pull_request_review: Submit a review on a PR. Requires owner, repo, pull_number, "
-        "event ('APPROVE'|'REQUEST_CHANGES'|'COMMENT'), and optionally a body and inline comments.\n\n"
+        "- pull_request_review_write: Submit a review on a PR. Requires owner, repo, pullNumber, "
+        "event ('APPROVE'|'REQUEST_CHANGES'|'COMMENT'), and optionally a body and inline comments. "
+        "Always call pull_request_read first to understand the changes before reviewing.\n"
+        "- add_reply_to_pull_request_comment: Reply to an existing review comment on a PR.\n\n"
         "## Guidelines\n"
         "- Always clarify owner and repo when not provided.\n"
         "- For merges and reviews, confirm intent before acting if the request is ambiguous.\n"
         "- Provide structured responses: include PR/issue numbers, titles, URLs, authors, and state.\n"
-        "- When reviewing a PR, call get_pull_request_files or get_pull_request_diff first to "
-        "understand the changes before submitting feedback."
+        "- Before submitting a review, always read the PR with pull_request_read first."
     ),
     tools=[
         MCPToolset(
