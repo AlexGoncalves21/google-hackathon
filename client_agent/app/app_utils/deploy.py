@@ -149,8 +149,18 @@ def configure_runtime_env(location: str, project: str) -> dict[str, str]:
 
 
 @click.command()
-@click.option("--project", default=None, help="GCP project ID.")
-@click.option("--location", default="us-central1", help="GCP region.")
+@click.option(
+    "--project",
+    envvar="GOOGLE_CLOUD_PROJECT",
+    default=None,
+    help="GCP project ID.",
+)
+@click.option(
+    "--location",
+    envvar="GOOGLE_CLOUD_LOCATION",
+    default="us-central1",
+    help="GCP region.",
+)
 @click.option(
     "--display-name",
     default="Client Agent",
