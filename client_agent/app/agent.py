@@ -28,15 +28,12 @@ AGENT_CONFIG = _load_agent_config()
 
 def _get_main_agent_base_url() -> str:
     """Resolve the remote main agent URL with backward-compatible env names."""
-    base_url = (
-        os.getenv("MAIN_AGENT_BASE_URL")
-        or os.getenv("GITHUB_AGENT_URL")
-    ).rstrip("/")
+    base_url = os.getenv("MAIN_AGENT_BASE_URL") or os.getenv("GITHUB_AGENT_URL")
     if not base_url:
         raise RuntimeError(
             "Set MAIN_AGENT_BASE_URL or GITHUB_AGENT_URL for the client agent."
         )
-    return base_url
+    return base_url.rstrip("/")
 
 
 def _build_agent_card_url() -> str:
