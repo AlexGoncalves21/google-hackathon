@@ -1,4 +1,5 @@
 import os
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -24,15 +25,19 @@ def _load_agent_config() -> dict[str, Any]:
 
 
 AGENT_CONFIG = _load_agent_config()
+PLACEHOLDER_MAIN_AGENT_BASE_URL = "https://example.invalid"
 
 
 def _get_main_agent_base_url() -> str:
     """Resolve the remote main agent URL with backward-compatible env names."""
     base_url = os.getenv("MAIN_AGENT_BASE_URL") or os.getenv("GITHUB_AGENT_URL")
     if not base_url:
-        raise RuntimeError(
-            "Set MAIN_AGENT_BASE_URL or GITHUB_AGENT_URL for the client agent."
+        warnings.warn(
+            "MAIN_AGENT_BASE_URL/GITHUB_AGENT_URL is not set during import; "
+            "using a placeholder URL until runtime env vars are injected.",
+            stacklevel=2,
         )
+        return PLACEHOLDER_MAIN_AGENT_BASE_URL
     return base_url.rstrip("/")
 
 

@@ -22,7 +22,13 @@ playground:
 # Deployment
 # ==============================================================================
 
+clean-package-artifacts:
+	find app -name '__pycache__' -type d -prune -exec rm -rf {} +
+	find app -name '*.pyc' -delete
+	find app -name '.DS_Store' -delete
+
 deploy:
+	$(MAKE) clean-package-artifacts
 	(uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > app/app_utils/.requirements.txt 2>/dev/null || \
 	uv export --no-hashes --no-header --no-dev --no-emit-project > app/app_utils/.requirements.txt) && \
 	uv run -m app.app_utils.deploy \
