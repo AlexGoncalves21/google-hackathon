@@ -80,22 +80,6 @@ SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
 
 # --- MCP Config ---
 MCP_URL = "https://api.githubcopilot.com/mcp/"
-TOOLS = [
-    # Repository tools
-    "search_repositories",
-    # Issue tools (read-only)
-    "search_issues",
-    "list_issues",
-    # Pull request tools
-    "list_pull_requests",
-    "search_pull_requests",
-    "pull_request_read",
-    "create_pull_request",
-    "merge_pull_request",
-    "update_pull_request",
-    "pull_request_review_write",
-    "add_reply_to_pull_request_comment",
-]
 
 if not GITHUB_TOKEN:
     raise RuntimeError(
@@ -113,27 +97,6 @@ root_agent = Agent(
         "and relevant details when available."
         "For the procedures use your skills to analyze commit impacts, triage issues, review PR changes, and ensure security best practices."
         "search, explore, and manage GitHub repositories, issues, and pull requests.\n\n"
-        "## Repository Tools\n"
-        "- search_repositories: Search for GitHub repositories by keyword, topic, or other criteria.\n\n"
-        "## Issue Tools\n"
-        "- search_issues: Search for issues across GitHub using queries (e.g. repo:owner/repo is:open).\n"
-        "- list_issues: List issues in a specific repository. Accepts owner, repo, and optional filters "
-        "(state, labels, assignee, milestone).\n\n"
-        "## Pull Request Tools\n"
-        "- list_pull_requests: List PRs in a repository. Accepts owner, repo, and optional filters "
-        "(state='open'|'closed'|'all', head, base, sort, direction).\n"
-        "- search_pull_requests: Search PRs across GitHub using queries (e.g. repo:owner/repo is:open).\n"
-        "- pull_request_read: Get full details of a specific PR by owner, repo, and pullNumber. "
-        "Returns title, body, state, author, reviewers, labels, changed files, and diff.\n"
-        "- create_pull_request: Create a new PR. Requires owner, repo, title, head (source branch), "
-        "base (target branch), and body. Optionally set draft=True or maintainer_can_modify.\n"
-        "- update_pull_request: Update an existing PR's title, body, state, or base branch.\n"
-        "- merge_pull_request: Merge a PR by owner, repo, and pullNumber. Optionally specify "
-        "merge_method ('merge'|'squash'|'rebase') and a commit message.\n"
-        "- pull_request_review_write: Submit a review on a PR. Requires owner, repo, pullNumber, "
-        "event ('APPROVE'|'REQUEST_CHANGES'|'COMMENT'), and optionally a body and inline comments. "
-        "Always call pull_request_read first to understand the changes before reviewing.\n"
-        "- add_reply_to_pull_request_comment: Reply to an existing review comment on a PR.\n\n"
         "## Guidelines\n"
         "- Always clarify owner and repo when not provided.\n"
         "- For merges and reviews, confirm intent before acting if the request is ambiguous.\n"
@@ -146,7 +109,6 @@ root_agent = Agent(
                 url=MCP_URL,
                 headers={"Authorization": f"Bearer {GITHUB_TOKEN}"},
             ),
-            tool_filter=TOOLS,
         ),
         my_skill_toolset,
     ],

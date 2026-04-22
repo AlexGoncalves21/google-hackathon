@@ -41,6 +41,21 @@ Perform a thorough, structured review of a Pull Request targeting the current re
    - Numbered list of required changes (blocking)
    - Numbered list of suggestions (non-blocking)
 
+## Pending Review Flow
+
+When performing detailed reviews with multiple inline comments, use the pending review tools to avoid sending multiple notifications:
+
+1. **Start the review**:
+   - Use `create_pending_pull_request_review` to initialize a review session.
+   - Note the `id` of the created review.
+
+2. **Add inline comments**:
+   - Use `add_pull_request_review_comment_to_pending_review` for each finding.
+   - Provide the `reviewId`, `path`, `line`, and `body` for the comment.
+
+3. **Submit the review**:
+   - Once all comments are added, use `submit_pull_request_review` (if available) or `pull_request_review_write` with the final summary to transition the review from `PENDING` to its final state.
+
 ## Best Practices
 
 - Focus on *why* a change was made, not just *what* changed
