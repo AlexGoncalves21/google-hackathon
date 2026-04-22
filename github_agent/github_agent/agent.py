@@ -91,8 +91,10 @@ root_agent = Agent(
         "and relevant details when available."
         "For the procedures use your skills to analyze commit impacts, triage issues, review PR changes, and ensure security best practices."
         "search, explore, and manage GitHub repositories, issues, and pull requests.\n\n"
+
         "## Guidelines\n"
         "- Ask for the repository url if not provided.\n"
+        "- Check if your skills can be applied to the user's request.\n"
         "- For merges and reviews, confirm intent before acting if the request is ambiguous.\n"
         "- Provide structured responses: include PR/issue numbers, titles, URLs, authors, and state.\n"
         "- Before submitting a review, always read the PR with `pull_request_read` first."
