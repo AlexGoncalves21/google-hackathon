@@ -12,7 +12,7 @@ from google.adk.agents.remote_a2a_agent import (
 )
 from google.adk.apps import App
 from google.adk.models import Gemini
-from google.adk.tools import VertexAiSearchTool
+from google.adk.tools import VertexAiSearchTool, AgentTool
 from google.genai import types
 
 from app.app_utils.authorized_a2a_client import build_main_agent_httpx_client
@@ -52,16 +52,18 @@ def _build_agent_card_url() -> str:
     return f"{base_url}/{card_path}"
 
 
-def _build_search_tools() -> list[Any]:
+def _get_full_datastore_path() -> str | None:
     if not DATASTORE_PATH:
-        warnings.warn(
-            "DATASTORE_PATH is not set; Vertex AI Search grounding is disabled.",
-            stacklevel=2,
-        )
-        return []
+        return None
+    project = os.getenv("GOOGLE_CLOUD_PROJECT")
+    # Vertex AI Search / Discovery Engine suele ser 'global' para el Datastore
+    # incluso si el modelo corre en us-central1
+    if not project:
+        return None
+    return f"projects/{project}/locations/global/collections/default_collection/dataStores/{DATASTORE_PATH}"
 
-    return [VertexAiSearchTool(data_store_id=DATASTORE_PATH)]
 
+# --- Especialistas ---
 
 github_specialist = RemoteA2aAgent(
     name=AGENT_CONFIG["remote_agent"]["name"],
@@ -70,6 +72,18 @@ github_specialist = RemoteA2aAgent(
     httpx_client=build_main_agent_httpx_client(_get_main_agent_base_url()),
 )
 
+# Creamos el especialista en documentación para encapsular Vertex AI Search
+documentation_path = _get_full_datastore_path()
+documentation_specialist = Agent(
+    name="documentation_specialist",
+    description="Specialist in searching internal documentation, architecture guides, and project standards.",
+    model=Gemini(model=os.getenv("MODEL_NAME", "gemini-2.5-pro")),
+    instruction="You are a documentation expert. Use your search tool to find answers in the knowledge base.",
+    tools=[VertexAiSearchTool(data_store_id=documentation_path)] if documentation_path else [],
+)
+
+# --- Agente Root ---
+
 root_agent = Agent(
     name=AGENT_CONFIG["root_agent"]["name"],
     model=Gemini(
@@ -77,8 +91,11 @@ root_agent = Agent(
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
     instruction=AGENT_CONFIG["root_agent"]["instruction"],
-    sub_agents=[github_specialist],
-    tools=_build_search_tools(),
+    sub_agents=[],
+    tools=[
+        AgentTool(github_specialist),
+        AgentTool(documentation_specialist)
+    ],
 )
 
 app = App(root_agent=root_agent, name=AGENT_CONFIG["app"]["name"])

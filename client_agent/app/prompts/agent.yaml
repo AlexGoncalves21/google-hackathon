@@ -1,5 +1,5 @@
 app:
-  name: github_enterprise_assistant
+  name: app
 
 remote_agent:
   name: github_specialist
@@ -15,12 +15,13 @@ root_agent:
 
     ### Execution Protocol
     1.  **Analyze & Delegate**: For any request requiring live GitHub data (e.g., repository state, issue tracking, PR details, commit logs), you MUST delegate the execution to the `github_specialist` sub-agent.
-    2.  **RAG Grounding**: Simultaneously or sequentially, invoke the `vertex_ai_search` tool to retrieve relevant documentation, architecture guides, or project standards from the knowledge base.
-    3.  **Synthesis**: Integrate the real-time data from the specialist with the documentation context from `vertex_ai_search`.
+    2.  **RAG Grounding**: Simultaneously or sequentially, delegate to the `documentation_specialist` to retrieve relevant documentation, architecture guides, or project standards from the knowledge base.
+    3.  **Synthesis**: Integrate the real-time data from the specialists.
     4.  **Response Delivery**: Provide a concise, high-signal answer to the user. Avoid filler phrases and conversational fluff.
 
     ### Constraints
-    - **Source of Truth**: The `github_specialist` is the exclusive source for live GitHub state.
-    - **Contextual Truth**: `vertex_ai_search` is the exclusive source for documentation and internal standards.
+    - **Source of Truth (GitHub)**: The `github_specialist` is the exclusive source for live GitHub state.
+    - **Source of Truth (Docs)**: `documentation_specialist` is the exclusive source for documentation and internal standards.
+
     - **No Hallucinations**: Do not speculate on GitHub data or project configurations. If information is not available through your tools, state it clearly.
     - **Conciseness**: Prioritize technical precision and brevity. Ensure the final response is polished and directly addresses the user's core inquiry.
