@@ -1,65 +1,47 @@
 ---
 name: review-pr-changes
-description: 'Structured Pull Request review — diff analysis, test coverage, documentation, and backward compatibility verification with a scored summary.'
+description: 'Structured Pull Request review — granular inline code feedback, diff analysis, test coverage, and documentation verification with a scored summary.'
 ---
 
 # Review PR Changes
 
-Perform a thorough, structured review of a Pull Request targeting the current repository.
+Perform a thorough, granular review of a Pull Request. A complete review MUST consist of specific inline feedback on code changes plus a high-level summary.
 
 ## Process
 
-1. **Fetch PR metadata** using `get_pull_request` to obtain title, description, base/head branches, and linked issues.
+1. **Fetch PR metadata** using `get_pull_request` to obtain title, description, and context.
 
-2. **List modified files** using `list_pull_request_files` to categorize changes by type:
-   - Source code (logic, features, bug fixes)
-   - Tests (unit, integration, e2e)
-   - Documentation (README, docstrings, guides)
-   - Configuration (env, CI/CD, dependencies)
+2. **List modified files** using `list_pull_request_files`.
 
-3. **Analyze the diff** using `get_pull_request_diff` for each significant file:
-   - Identify added, removed, and modified logic
-   - Detect changes to public interfaces or APIs
-   - Note any TODO/FIXME/HACK comments introduced
+3. **Granular Diff Analysis (Line-by-Line)**:
+   - Use `get_pull_request_diff` for each significant file.
+   - **Crucial Task**: Identify specific lines where code could be improved, contains bugs, lacks error handling, or violates project standards.
+   - For every finding, note the **file path**, the **line number** (from the new version of the code), and the **reason** for the change request.
 
-4. **Evaluate test coverage**:
-   - Confirm that every new function or changed behavior has a corresponding test
-   - Flag missing test cases for edge conditions
-   - Check that existing tests were not removed without justification
+4. **Evaluate test coverage & documentation**:
+   - Verify that new logic has corresponding tests.
+   - Check if README or docstrings need updates.
 
-5. **Verify documentation**:
-   - Ensure new parameters, return types, and behaviors are documented
-   - Confirm README or guide updates if user-facing behavior changed
+5. **Execute Inline Feedback (Mandatory if changes are needed)**:
+   - If you identified ANY issues in step 3, you **MUST** use the **Pending Review Flow** below.
+   - Do NOT just list issues in the final summary; place them as comments on the actual code lines using `add_pull_request_review_comment_to_pending_review`.
 
-6. **Check backward compatibility**:
-   - Identify renamed or removed public symbols, endpoints, or config keys
-   - Flag breaking changes that require a major version bump or migration guide
-
-7. **Emit review summary** with:
-   - Overall score: APPROVE / REQUEST CHANGES / COMMENT
-   - Category scores (Logic, Tests, Docs, Compatibility) rated 1-5
-   - Numbered list of required changes (blocking)
-   - Numbered list of suggestions (non-blocking)
+6. **Emit high-level review summary**:
+   - Provide an overall score: APPROVE / REQUEST CHANGES / COMMENT.
+   - Summarize the main themes of your review (e.g., "Good logic but needs better error handling in the API layer").
+   - Include category scores (1-5) for Logic, Tests, Docs, and Compatibility.
 
 ## Pending Review Flow
 
-When performing detailed reviews with multiple inline comments, use the pending review tools to avoid sending multiple notifications:
+Use this flow whenever you need to add one or more inline comments. This groups all your feedback into a single notification for the developer.
 
-1. **Start the review**:
-   - Use `create_pending_pull_request_review` to initialize a review session.
-   - Note the `id` of the created review.
-
-2. **Add inline comments**:
-   - Use `add_pull_request_review_comment_to_pending_review` for each finding.
-   - Provide the `reviewId`, `path`, `line`, and `body` for the comment.
-
-3. **Submit the review**:
-   - Once all comments are added, use `submit_pull_request_review` (if available) or `pull_request_review_write` with the final summary to transition the review from `PENDING` to its final state.
+1. **Initialize**: Call `create_pending_pull_request_review`. Note the `id` of the created review.
+2. **Comment**: For each finding from step 3, call `add_pull_request_review_comment_to_pending_review` with the `reviewId`, `path`, `line`, and a clear, actionable `body`.
+3. **Finalize**: Use `submit_pull_request_review` (or `pull_request_review_write`) to submit all pending comments along with your high-level summary and final decision (e.g., `REQUEST_CHANGES`).
 
 ## Best Practices
 
-- Focus on *why* a change was made, not just *what* changed
-- Prefer asking clarifying questions over assuming intent
-- Distinguish blocking issues from style preferences
-- Keep feedback actionable: reference file, line, and proposed fix
-- Acknowledge well-written code and good test coverage explicitly
+- **Actionable Comments**: Don't just say "this is bad". Say "This could fail if X is null; consider adding a guard clause".
+- **Context**: Use the `documentation_specialist` (if available) to verify if the code follows internal architecture standards before asking for a refactor.
+- **Granularity**: Prefer multiple specific inline comments over one giant wall of text in the general comment.
+- **Positive Reinforcement**: Acknowledge particularly well-written or clever solutions.

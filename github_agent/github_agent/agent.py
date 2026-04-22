@@ -24,6 +24,8 @@ import yaml
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from dotenv import load_dotenv
 from google.adk import Agent
+from google.adk.models import Gemini
+from google.genai import types
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
 from google.adk.skills import load_skill_from_dir
 from google.adk.tools import skill_toolset
@@ -82,19 +84,21 @@ if not GITHUB_TOKEN:
 
 root_agent = Agent(
     name=AGENT_CONFIG["agent"]["name"],
-    model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
+    model=Gemini(
+        model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
+        retry_options=types.HttpRetryOptions(attempts=5),
+    ),
     description="An agent that uses MCP to interact with GitHub.",
     instruction=(
-        "You are a specialized GitHub agent. Use the available MCP tools to help users "
-        "search and explore GitHub repositories and issues.\n\n"
-        "Always provide clear, structured responses. Include repository names, URLs, "
-        "and relevant details when available."
-        "For the procedures use your skills to analyze commit impacts, triage issues, review PR changes, and ensure security best practices."
+        "You are a specialized GitHub agent. Use the available MCP tools and your internal skills to help users "
         "search, explore, and manage GitHub repositories, issues, and pull requests.\n\n"
-
+        "## Core Directive\n"
+        "For complex procedures (PR reviews, impact analysis, security audits), you MUST use your specialized skills. "
+        "When instructed to perform a granular review, you MUST identify specific code lines for improvement and use "
+        "the 'Pending Review Flow' to leave inline comments before submitting your final decision.\n\n"
         "## Guidelines\n"
-        "- Ask for the repository url if not provided.\n"
-        "- Check if your skills can be applied to the user's request.\n"
+        "- Ask for the repository URL if not provided.\n"
+        "- Always check if your skills can be applied to the user's request.\n"
         "- For merges and reviews, confirm intent before acting if the request is ambiguous.\n"
         "- Provide structured responses: include PR/issue numbers, titles, URLs, authors, and state.\n"
         "- Before submitting a review, always read the PR with `pull_request_read` first."

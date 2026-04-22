@@ -65,6 +65,9 @@ def _get_full_datastore_path() -> str | None:
 
 # --- Especialistas ---
 
+# Configuración común de reintentos para mitigar errores 429
+retry_config = types.HttpRetryOptions(attempts=5)
+
 github_specialist = RemoteA2aAgent(
     name=AGENT_CONFIG["remote_agent"]["name"],
     description=AGENT_CONFIG["remote_agent"]["description"],
@@ -72,12 +75,15 @@ github_specialist = RemoteA2aAgent(
     httpx_client=build_main_agent_httpx_client(_get_main_agent_base_url()),
 )
 
-# Creamos el especialista en documentación para encapsular Vertex AI Search
+# Creamos el especialista en documentación con reintentos
 documentation_path = _get_full_datastore_path()
 documentation_specialist = Agent(
     name="documentation_specialist",
     description="Specialist in searching internal documentation, architecture guides, and project standards.",
-    model=Gemini(model=os.getenv("MODEL_NAME", "gemini-2.5-pro")),
+    model=Gemini(
+        model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
+        retry_options=retry_config
+    ),
     instruction="You are a documentation expert. Use your search tool to find answers in the knowledge base.",
     tools=[VertexAiSearchTool(data_store_id=documentation_path)] if documentation_path else [],
 )
@@ -88,7 +94,7 @@ root_agent = Agent(
     name=AGENT_CONFIG["root_agent"]["name"],
     model=Gemini(
         model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
-        retry_options=types.HttpRetryOptions(attempts=3),
+        retry_options=retry_config,
     ),
     instruction=AGENT_CONFIG["root_agent"]["instruction"],
     sub_agents=[],

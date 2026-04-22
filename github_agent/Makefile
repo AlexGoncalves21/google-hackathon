@@ -1,7 +1,7 @@
 .PHONY: run
 
 PROJECT_ID ?= $(shell gcloud config get-value project 2>/dev/null)
-REGION ?= us-central1
+REGION ?= europe-west4
 SERVICE_NAME ?= github-a2a-agent
 PORT ?= 8001
 HOST ?= 0.0.0.0
