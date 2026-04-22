@@ -31,11 +31,7 @@ from google.adk.tools.mcp_tool import MCPToolset, StreamableHTTPConnectionParams
 
 SKILLS_DIR = pathlib.Path(__file__).resolve().parent.parent / "skills"
 
-adk_agent_conventions = load_skill_from_dir(SKILLS_DIR / "adk-agent-conventions")
-
 commit_impact_analysis = load_skill_from_dir(SKILLS_DIR / "commit-impact-analysis")
-
-conventional_commits = load_skill_from_dir(SKILLS_DIR / "conventional-commits")
 
 github_issue_triage = load_skill_from_dir(SKILLS_DIR / "github-issue-triage")
 
@@ -45,9 +41,7 @@ security_change_review = load_skill_from_dir(SKILLS_DIR / "security-change-revie
 
 my_skill_toolset = skill_toolset.SkillToolset(
     skills=[
-        adk_agent_conventions,
         commit_impact_analysis,
-        conventional_commits,
         github_issue_triage,
         review_pr_changes,
         security_change_review,
