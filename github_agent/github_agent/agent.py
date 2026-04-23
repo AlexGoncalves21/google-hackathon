@@ -24,12 +24,12 @@ import yaml
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from dotenv import load_dotenv
 from google.adk import Agent
-from google.adk.models import Gemini
-from google.genai import types
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
+from google.adk.models import Gemini
 from google.adk.skills import load_skill_from_dir
 from google.adk.tools import skill_toolset
 from google.adk.tools.mcp_tool import MCPToolset, StreamableHTTPConnectionParams
+from google.genai import types
 
 SKILLS_DIR = pathlib.Path(__file__).resolve().parent.parent / "skills"
 
@@ -82,26 +82,21 @@ if not GITHUB_TOKEN:
         "GITHUB_PERSONAL_ACCESS_TOKEN is required to start the GitHub A2A service."
     )
 
+agent_config = AGENT_CONFIG.get("agent", {})
+agent_card_config = AGENT_CONFIG.get("agent_card", {})
+
 root_agent = Agent(
-    name=AGENT_CONFIG["agent"]["name"],
+    name=agent_config.get("name", "github_agent"),
     model=Gemini(
         model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
         retry_options=types.HttpRetryOptions(attempts=5),
     ),
-    description="An agent that uses MCP to interact with GitHub.",
-    instruction=(
-        "You are a specialized GitHub agent. Use the available MCP tools and your internal skills to help users "
-        "search, explore, and manage GitHub repositories, issues, and pull requests.\n\n"
-        "## Core Directive\n"
-        "For complex procedures (PR reviews, impact analysis, security audits), you MUST use your specialized skills. "
-        "When instructed to perform a granular review, you MUST identify specific code lines for improvement and use "
-        "the 'Pending Review Flow' to leave inline comments before submitting your final decision.\n\n"
-        "## Guidelines\n"
-        "- Ask for the repository URL if not provided.\n"
-        "- Always check if your skills can be applied to the user's request.\n"
-        "- For merges and reviews, confirm intent before acting if the request is ambiguous.\n"
-        "- Provide structured responses: include PR/issue numbers, titles, URLs, authors, and state.\n"
-        "- Before submitting a review, always read the PR with `pull_request_read` first."
+    description=agent_config.get(
+        "description", "An agent that uses MCP to interact with GitHub."
+    ),
+    instruction=agent_config.get(
+        "instruction",
+        "You are a specialized GitHub agent. Use the available MCP tools and your internal skills to help users search, explore, and manage GitHub repositories, issues, and pull requests.",
     ),
     tools=[
         MCPToolset(
@@ -115,20 +110,26 @@ root_agent = Agent(
 )
 
 agent_card = AgentCard(
-    name="GithubAgent-A2A",
-    description="An agent that uses MCP to interact with GitHub.",
+    name=agent_card_config.get("name", "GithubAgent-A2A"),
+    description=agent_card_config.get(
+        "description", "An agent that uses MCP to interact with GitHub."
+    ),
     url=GITHUB_AGENT_URL,
-    version="1.0.0",
+    version=agent_card_config.get("version", "1.0.0"),
     capabilities=AgentCapabilities(streaming=False),
     default_input_modes=SUPPORTED_CONTENT_TYPES,
     default_output_modes=SUPPORTED_CONTENT_TYPES,
     skills=[
         AgentSkill(
-            id="search_github_events",
-            name="Search GitHub Events",
-            description="Epertise in Github event search and analysis, providing insights into repository activities, issue trends, and pull request dynamics.",
-            tags=["github", "repository", "code"],
+            id=skill.get("id", "search_github_events"),
+            name=skill.get("name", "Search GitHub Events"),
+            description=skill.get(
+                "description",
+                "Search GitHub for repositories and issues relevant to a request.",
+            ),
+            tags=skill.get("tags", []),
         )
+        for skill in agent_card_config.get("skills", [])
     ],
 )
 
