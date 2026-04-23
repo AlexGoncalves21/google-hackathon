@@ -11,8 +11,9 @@ from google.adk.agents.remote_a2a_agent import (
     RemoteA2aAgent,
 )
 from google.adk.apps import App
+from google.adk.code_executors import BuiltInCodeExecutor
 from google.adk.models import Gemini
-from google.adk.tools import VertexAiSearchTool, AgentTool
+from google.adk.tools import AgentTool
 from google.genai import types
 
 from app.app_utils.authorized_a2a_client import build_main_agent_httpx_client
@@ -22,6 +23,7 @@ load_dotenv()
 PROMPTS_PATH = Path(__file__).resolve().parent / "prompts" / "agent.yaml"
 
 DATASTORE_PATH = os.getenv("DATASTORE_PATH", "").strip()
+
 
 def _load_agent_config() -> dict[str, Any]:
     with PROMPTS_PATH.open(encoding="utf-8") as file:
@@ -83,11 +85,10 @@ root_agent = Agent(
         model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
         retry_options=retry_config,
     ),
+    code_executor=BuiltInCodeExecutor(),
     instruction=AGENT_CONFIG["root_agent"]["instruction"],
     sub_agents=[],
-    tools=[
-        AgentTool(github_specialist)
-    ],
+    tools=[AgentTool(github_specialist)],
 )
 
 app = App(root_agent=root_agent, name=AGENT_CONFIG["app"]["name"])
