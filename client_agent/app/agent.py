@@ -75,19 +75,6 @@ github_specialist = RemoteA2aAgent(
     httpx_client=build_main_agent_httpx_client(_get_main_agent_base_url()),
 )
 
-# Creamos el especialista en documentación con reintentos
-documentation_path = _get_full_datastore_path()
-documentation_specialist = Agent(
-    name="documentation_specialist",
-    description="Specialist in searching internal documentation, architecture guides, and project standards.",
-    model=Gemini(
-        model=os.getenv("MODEL_NAME", "gemini-2.5-pro"),
-        retry_options=retry_config
-    ),
-    instruction="You are a documentation expert. Use your search tool to find answers in the knowledge base.",
-    tools=[VertexAiSearchTool(data_store_id=documentation_path)] if documentation_path else [],
-)
-
 # --- Agente Root ---
 
 root_agent = Agent(
@@ -99,8 +86,7 @@ root_agent = Agent(
     instruction=AGENT_CONFIG["root_agent"]["instruction"],
     sub_agents=[],
     tools=[
-        AgentTool(github_specialist),
-        AgentTool(documentation_specialist)
+        AgentTool(github_specialist)
     ],
 )
 
