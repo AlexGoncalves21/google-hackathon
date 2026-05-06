@@ -4,6 +4,8 @@
 [![Google ADK](https://img.shields.io/badge/Google-ADK-34A853?logo=google&logoColor=white)](https://google.github.io/adk-docs/)
 [![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%26%20Cloud%20Run-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/)
 
+> **This project won the first Gemini Enterprise Hackathon, at Google's headquarters in Madrid.**
+
 This repo contains the hackathon delivery for a Gemini Enterprise GitHub assistant. Users interact with a Client Agent running on Vertex AI Agent Engine, which routes work to two sub-agents: a GitHub specialist backed by an MCP tool and skills, and a RAG specialist backed by Vertex AI vector search. Together they provide a single GitHub copilot experience while keeping user-facing orchestration, GitHub operations, and retrieval independently deployable.
 
 This repo is intentionally split into two self-contained projects:
