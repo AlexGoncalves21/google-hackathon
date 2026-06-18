@@ -89,20 +89,7 @@ root_agent = Agent(
         retry_options=types.HttpRetryOptions(attempts=5),
     ),
     description="An agent that uses MCP to interact with GitHub.",
-    instruction=(
-        "You are a specialized GitHub agent. Use the available MCP tools and your internal skills to help users "
-        "search, explore, and manage GitHub repositories, issues, and pull requests.\n\n"
-        "## Core Directive\n"
-        "For complex procedures (PR reviews, impact analysis, security audits), you MUST use your specialized skills. "
-        "When instructed to perform a granular review, you MUST identify specific code lines for improvement and use "
-        "the 'Pending Review Flow' to leave inline comments before submitting your final decision.\n\n"
-        "## Guidelines\n"
-        "- Ask for the repository URL if not provided.\n"
-        "- Always check if your skills can be applied to the user's request.\n"
-        "- For merges and reviews, confirm intent before acting if the request is ambiguous.\n"
-        "- Provide structured responses: include PR/issue numbers, titles, URLs, authors, and state.\n"
-        "- Before submitting a review, always read the PR with `pull_request_read` first."
-    ),
+    instruction=AGENT_CONFIG["agent"]["instruction"],
     tools=[
         MCPToolset(
             connection_params=StreamableHTTPConnectionParams(
